@@ -50,16 +50,15 @@ FusionEKF::FusionEKF() {
     0, 0, 0, 0,
     0, 0, 0, 0;
 
-  // Acceleration noise components (section 13)
-  noise_ax_ = 3 * 3; // Provided in lesson 5, section 13; 3 * 3 = 9
-  noise_ay_ = noise_ax_; // Assume noise_ay == noise_ax
-
   /**
    TODO:
    * Finish initializing the FusionEKF.
    * Set the process and measurement noises
    */
 
+  // Acceleration noise components (section 13)
+  noise_ax_ = 3 * 3; // Provided in lesson 5, section 13; 3 * 3 = 9
+  noise_ay_ = noise_ax_; // Assume noise_ay == noise_ax
 }
 
 /**
@@ -85,7 +84,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.x_ = VectorXd(4);
     ekf_.x_ <<
       1, 1, // these values will be overwritten below
-      4, 0; // TODO: these values need to be tweaked for correct RMSE
+      3, 3; // TODO: these values need to be tweaked for correct RMSE
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       /**
@@ -137,32 +136,29 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
 
   float dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
-  previous_timestamp_ = measurement_pack.timestamp_;
 
-  // Update time in the F matrix, from lesson 5, section 8
-  ekf_.F_(0, 2) = dt;
-  ekf_.F_(1, 3) = dt;
+  if (dt > 0.001) {
+    previous_timestamp_ = measurement_pack.timestamp_;
 
-  // Updated the process covariance matrix Q, from quiz in lesson 5, section 9
+    // Update time in the F matrix, from lesson 5, section 8
+    ekf_.F_(0, 2) = dt;
+    ekf_.F_(1, 3) = dt;
 
-  float dt2 = dt*dt;
-  float dt3 = dt2*dt;
-  float dt4 = dt3*dt;
+    // Updated the process covariance matrix Q, from quiz in lesson 5, section 9
 
-  ekf_.Q_ = MatrixXd(4, 4);
-  ekf_.Q_ <<
-  dt4/4*noise_ax_,  0,                dt3/2*noise_ax_,  0,
-  0,                dt4/4*noise_ay_,  0,                dt3/2*noise_ay_,
-  dt3/2*noise_ax_,  0,                dt2*noise_ax_,    0,
-  0,                dt3/2*noise_ay_,  0,                dt2*noise_ay_;
+    float dt2 = dt*dt;
+    float dt3 = dt2*dt;
+    float dt4 = dt3*dt;
 
+    ekf_.Q_ = MatrixXd(4, 4);
+    ekf_.Q_ <<
+    dt4/4*noise_ax_,  0,                dt3/2*noise_ax_,  0,
+    0,                dt4/4*noise_ay_,  0,                dt3/2*noise_ay_,
+    dt3/2*noise_ax_,  0,                dt2*noise_ax_,    0,
+    0,                dt3/2*noise_ay_,  0,                dt2*noise_ay_;
 
-
-
-
-
-
-  ekf_.Predict();
+    ekf_.Predict();
+  }
 
   /*****************************************************************************
    *  Update

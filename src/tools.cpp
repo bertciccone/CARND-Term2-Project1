@@ -75,6 +75,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   //check division by zero
   if(fabs(c1) < 0.0001 or fabs(c2) < 0.0001 or fabs(c3) < 0.0001){
     cout << "CalculateJacobian () - Error - Division by Zero" << endl;
+    Hj.setZero();
     return Hj;
   }
 
